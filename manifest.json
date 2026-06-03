@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Instant Currency",
+  "description": "See estimated currency conversions beside prices as you browse.",
+  "version": "0.1.0",
+  "action": {
+    "default_title": "Instant Currency",
+    "default_popup": "src/popup/popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["storage"]
+}
