@@ -7,7 +7,7 @@ A Chrome/Chromium extension that will show estimated currency conversions next t
 Instant Currency is in the early extension build-out:
 
 - Phase 1 foundation is in place: Manifest V3, popup shell, background worker, content script, Vite, and TypeScript.
-- Phase 2 price detection has started: common symbols, ISO currency codes, amount parsing, and detector tests are present.
+- Phase 2 price detection is in place: common symbols, ISO currency codes, amount parsing, duplicate-safe text-node scanning, and detector tests are present.
 - Conversion, rendering, user preferences, dynamic page handling, caching, and per-site controls are planned next.
 
 See [docs/PROJECT_PHASES.md](docs/PROJECT_PHASES.md) for the full phased project breakdown.

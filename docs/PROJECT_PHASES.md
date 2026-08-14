@@ -11,8 +11,8 @@ detection slice:
 - Manifest V3 setup with popup, content script, and background worker entries.
 - Vite and TypeScript build configuration for extension bundles.
 - Lightweight popup shell for local extension loading.
-- Price detector support for common symbols, ISO currency codes, separators, and
-  duplicate text-node avoidance.
+- Price detector support for common symbols, ISO currency codes, separators,
+  duplicate text-node avoidance, and content-script page scanning.
 - Vitest coverage for detector parsing behavior.
 
 ## Phase 1: Extension Foundation
@@ -46,12 +46,16 @@ Deliverables:
   and ZAR.
 - Amount parsing for comma, dot, and space separators.
 - Text-node scanning that skips ignored elements and already converted content.
+- Content-script scanning that records processed text nodes before rendering is
+  introduced.
 - Unit tests for representative price formats.
 
 Repo areas:
 
 - `src/content/priceDetector.ts`
 - `src/content/priceDetector.test.ts`
+- `src/content/priceScanner.ts`
+- `src/content/index.ts`
 - `src/types/currency.ts`
 
 ## Phase 3: Conversion Service

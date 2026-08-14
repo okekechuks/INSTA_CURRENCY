@@ -19,6 +19,25 @@ describe("findPrices", () => {
       { amount: 4000, currency: "JPY" },
     ]);
   });
+
+  it("detects the phase 2 target formats from the project brief", () => {
+    expect(
+      findPrices("$1,299.99 US$1,299.99 USD 1,299.99 1,299.99 USD").map(({ amount, currency, raw }) => ({
+        amount,
+        currency,
+        raw,
+      })),
+    ).toEqual([
+      { amount: 1299.99, currency: "USD", raw: "$1,299.99" },
+      { amount: 1299.99, currency: "USD", raw: "US$1,299.99" },
+      { amount: 1299.99, currency: "USD", raw: "USD 1,299.99" },
+      { amount: 1299.99, currency: "USD", raw: "1,299.99 USD" },
+    ]);
+  });
+
+  it("normalizes lower-case currency codes", () => {
+    expect(findPrices("cad 14.50 and 19.99 aud").map(({ currency }) => currency)).toEqual(["CAD", "AUD"]);
+  });
 });
 
 describe("parseAmount", () => {
