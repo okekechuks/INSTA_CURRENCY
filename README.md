@@ -144,7 +144,7 @@ extension:
 For this workspace, the folder to select is:
 
 ```text
-C:\Users\chuka\OneDrive\Documents\INSTA_CURRENCY\dist
+C:\Users\(Your_PC)\OneDrive\Documents\INSTA_CURRENCY\dist
 ```
 
 If the extension is already loaded, click the reload button on
