@@ -6,6 +6,7 @@ import {
   type UserPreferences,
 } from "../utils/storage";
 
+import { observeDynamicContent, type DynamicContentObserver } from "./dynamicContent";
 import { clearRenderedPriceEstimates, renderConvertedPrices } from "./priceRenderer";
 import { createPriceScanner, type PriceScanMatch } from "./priceScanner";
 
@@ -26,11 +27,12 @@ interface PricesConvertedEventDetail {
 let scanner = createPriceScanner();
 const exchangeRates = createExchangeRateService();
 let preferences: UserPreferences;
+let dynamicContentObserver: DynamicContentObserver | undefined;
 
-function scanPage(): void {
+function scanPage(root?: ParentNode): void {
   if (!preferences.automaticConversion) return;
 
-  const matches = scanner.scan();
+  const matches = scanner.scan(root);
   if (matches.length === 0) return;
 
   const detail: PriceDetectedEventDetail = {
@@ -90,6 +92,9 @@ async function convertPrices(matches: PriceScanMatch[]): Promise<void> {
 async function initialize(): Promise<void> {
   preferences = await getPreferences();
   scanPage();
+  dynamicContentObserver = observeDynamicContent(document.body, (roots) => {
+    for (const root of roots) scanPage(root);
+  });
 
   chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== "sync" || !changes[PREFERENCES_STORAGE_KEY]) return;

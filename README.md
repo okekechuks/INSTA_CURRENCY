@@ -11,7 +11,8 @@ Instant Currency is in the early extension build-out:
 - Phase 3 conversion is in place: a provider-isolated exchange-rate service fetches live rates and emits converted-price data, with no page change when a rate cannot be retrieved.
 - Phase 4 rendering is in place: estimated values render beside source prices, with original text preserved and duplicate-safe markers.
 - Phase 5 preferences are in place: the popup stores a target currency and display options, then active pages reapply conversions when settings change.
-- Dynamic page handling, persistent caching, and per-site controls are planned next.
+- Phase 6 dynamic-page support is in place: added content is batched and scanned after it appears on the page.
+- Persistent caching and per-site controls are planned next.
 
 See [docs/PROJECT_PHASES.md](docs/PROJECT_PHASES.md) for the full phased project breakdown.
 

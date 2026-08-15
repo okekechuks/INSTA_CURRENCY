@@ -16,6 +16,7 @@ detection slice:
 - Vitest coverage for detector parsing and conversion behavior.
 - Rendered estimates that preserve the merchant's original price text.
 - Stored user preferences and a working popup control surface.
+- Debounced dynamic-content scanning with bounded page work.
 
 ## Phase 1: Extension Foundation
 
@@ -126,6 +127,7 @@ Deliverables:
 - Debounced rescans for inserted nodes.
 - DOM work limits to avoid page slowdowns.
 - Tests or fixtures for dynamically added price text.
+- A bounded queue that falls back to one body-level scan for mutation-heavy pages.
 
 Repo areas:
 
