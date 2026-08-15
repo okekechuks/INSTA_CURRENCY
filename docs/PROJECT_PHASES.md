@@ -14,6 +14,7 @@ detection slice:
 - Price detector support for common symbols, ISO currency codes, separators,
   duplicate text-node avoidance, and content-script page scanning.
 - Vitest coverage for detector parsing and conversion behavior.
+- Rendered estimates that preserve the merchant's original price text.
 
 ## Phase 1: Extension Foundation
 
@@ -86,6 +87,7 @@ Deliverables:
 - Formatting through `Intl.NumberFormat`.
 - Marker attributes/classes to prevent duplicate processing.
 - Clear estimate styling that does not look like merchant-provided pricing.
+- Duplicate-safe renderer tests for text containing one or more prices.
 
 Repo areas:
 
