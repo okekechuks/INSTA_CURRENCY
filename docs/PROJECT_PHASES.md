@@ -13,7 +13,7 @@ detection slice:
 - Lightweight popup shell for local extension loading.
 - Price detector support for common symbols, ISO currency codes, separators,
   duplicate text-node avoidance, and content-script page scanning.
-- Vitest coverage for detector parsing behavior.
+- Vitest coverage for detector parsing and conversion behavior.
 
 ## Phase 1: Extension Foundation
 
@@ -68,6 +68,7 @@ Deliverables:
 - Conversion calculation helper.
 - Provider-normalized rate response types.
 - Network failure handling with graceful no-render fallback.
+- A default NGN target until user preferences are introduced in Phase 5.
 
 Repo areas:
 

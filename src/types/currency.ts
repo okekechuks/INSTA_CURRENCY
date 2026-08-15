@@ -20,3 +20,17 @@ export interface DetectedPrice {
   raw: string;
   start: number;
 }
+
+export interface ExchangeRate {
+  from: CurrencyCode;
+  rate: number;
+  to: CurrencyCode;
+  updatedAt: number;
+}
+
+export interface ConvertedPrice {
+  convertedAmount: number;
+  original: DetectedPrice;
+  rate: ExchangeRate;
+  targetCurrency: CurrencyCode;
+}
