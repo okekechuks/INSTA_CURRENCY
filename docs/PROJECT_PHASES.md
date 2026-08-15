@@ -19,6 +19,7 @@ rate caching:
 - Debounced dynamic-content scanning with bounded page work.
 - Background-owned exchange-rate caching with stale fallback and popup cache
   status.
+- Per-site enable/disable controls for the active website.
 
 ## Phase 1: Extension Foundation
 

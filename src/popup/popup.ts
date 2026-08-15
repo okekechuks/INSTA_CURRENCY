@@ -2,14 +2,24 @@ import "./popup.css";
 
 import { CURRENCY_LABELS, SUPPORTED_CURRENCIES, type CurrencyCode } from "../types/currency";
 import { getLatestCachedExchangeRate, RATE_CACHE_STORAGE_KEY } from "../utils/rateCache";
-import { getPreferences, savePreferences } from "../utils/storage";
+import {
+  getPreferences,
+  isSiteEnabled,
+  savePreferences,
+  setSiteEnabled,
+  SITE_CONTROLS_STORAGE_KEY,
+} from "../utils/storage";
 
 const form = getElement<HTMLFormElement>("preferences-form");
 const targetCurrency = getElement<HTMLSelectElement>("target-currency");
 const automaticConversion = getElement<HTMLInputElement>("automatic-conversion");
 const showOriginalPrice = getElement<HTMLInputElement>("show-original-price");
+const currentSiteEnabled = getElement<HTMLInputElement>("current-site-enabled");
+const currentSiteHost = getElement<HTMLElement>("current-site-host");
 const saveStatus = getElement<HTMLParagraphElement>("save-status");
 const rateStatus = getElement<HTMLParagraphElement>("rate-status");
+
+let activeHostname: string | null = null;
 
 for (const currency of SUPPORTED_CURRENCIES) {
   const option = document.createElement("option");
@@ -20,18 +30,32 @@ for (const currency of SUPPORTED_CURRENCIES) {
 
 void initializePopup();
 
-form.addEventListener("change", () => {
+form.addEventListener("change", (event) => {
+  if (event.target === currentSiteEnabled) {
+    void persistCurrentSiteControl();
+    return;
+  }
+
   void persistPreferences();
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== "local" || !changes[RATE_CACHE_STORAGE_KEY]) return;
+  if (areaName === "local" && changes[RATE_CACHE_STORAGE_KEY]) {
+    void loadRateStatus();
+    return;
+  }
 
-  void loadRateStatus();
+  if (areaName === "sync" && changes[SITE_CONTROLS_STORAGE_KEY]) {
+    void loadCurrentSiteControl();
+  }
+
 });
 
 async function initializePopup(): Promise<void> {
   await loadPreferences();
+  activeHostname = await getActiveHostname();
+  renderActiveSite();
+  await loadCurrentSiteControl();
   await loadRateStatus();
 }
 
@@ -58,6 +82,29 @@ async function persistPreferences(): Promise<void> {
   }
 }
 
+async function loadCurrentSiteControl(): Promise<void> {
+  if (!activeHostname) {
+    currentSiteEnabled.checked = false;
+    return;
+  }
+
+  currentSiteEnabled.checked = await isSiteEnabled(activeHostname);
+}
+
+async function persistCurrentSiteControl(): Promise<void> {
+  if (!activeHostname) return;
+
+  saveStatus.textContent = "Saving...";
+
+  try {
+    await setSiteEnabled(activeHostname, currentSiteEnabled.checked);
+    saveStatus.textContent = currentSiteEnabled.checked ? "Enabled on this site" : "Disabled on this site";
+  } catch {
+    saveStatus.textContent = "Could not save site setting";
+    await loadCurrentSiteControl();
+  }
+}
+
 async function loadRateStatus(): Promise<void> {
   try {
     const latestRate = await getLatestCachedExchangeRate(
@@ -81,6 +128,24 @@ function formatTimestamp(timestamp: number): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(timestamp));
+}
+
+async function getActiveHostname(): Promise<string | null> {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const activeTabUrl = tabs[0]?.url;
+  if (!activeTabUrl) return null;
+
+  try {
+    const url = new URL(activeTabUrl);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.hostname : null;
+  } catch {
+    return null;
+  }
+}
+
+function renderActiveSite(): void {
+  currentSiteEnabled.disabled = !activeHostname;
+  currentSiteHost.textContent = activeHostname ?? "Unavailable on this page";
 }
 
 function getElement<ElementType extends HTMLElement>(id: string): ElementType {

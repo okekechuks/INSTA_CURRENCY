@@ -69,6 +69,18 @@ select {
   font-weight: 600;
 }
 
+.setting-row small {
+  display: block;
+  max-width: 245px;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #607086;
+  font-size: 11px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .setting-row input {
   width: 17px;
   height: 17px;
