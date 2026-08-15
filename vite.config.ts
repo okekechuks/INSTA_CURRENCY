@@ -1,14 +1,17 @@
 import { copyFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vite";
+
+const projectRoot = dirname(fileURLToPath(import.meta.url));
 
 function copyManifest(): Plugin {
   return {
     name: "copy-extension-manifest",
     closeBundle() {
       copyFileSync(
-        resolve(__dirname, "manifest.json"),
-        resolve(__dirname, "dist/manifest.json"),
+        resolve(projectRoot, "manifest.json"),
+        resolve(projectRoot, "dist/manifest.json"),
       );
     },
   };
@@ -21,9 +24,9 @@ export default defineConfig({
     outDir: "dist",
     rollupOptions: {
       input: {
-        popup: resolve(__dirname, "src/popup/popup.html"),
-        background: resolve(__dirname, "src/background/background.ts"),
-        content: resolve(__dirname, "src/content/index.ts"),
+        popup: resolve(projectRoot, "src/popup/popup.html"),
+        background: resolve(projectRoot, "src/background/background.ts"),
+        content: resolve(projectRoot, "src/content/index.ts"),
       },
       output: {
         entryFileNames: "[name].js",
@@ -33,4 +36,3 @@ export default defineConfig({
     },
   },
 });
-
