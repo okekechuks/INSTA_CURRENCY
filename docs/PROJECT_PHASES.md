@@ -5,8 +5,8 @@ Chrome/Chromium Manifest V3 extension.
 
 ## Current Snapshot
 
-The repository currently contains the extension foundation and the first price
-detection slice:
+The repository currently contains the core extension workflow through shared
+rate caching:
 
 - Manifest V3 setup with popup, content script, and background worker entries.
 - Vite and TypeScript build configuration for extension bundles.
@@ -17,6 +17,8 @@ detection slice:
 - Rendered estimates that preserve the merchant's original price text.
 - Stored user preferences and a working popup control surface.
 - Debounced dynamic-content scanning with bounded page work.
+- Background-owned exchange-rate caching with stale fallback and popup cache
+  status.
 
 ## Phase 1: Extension Foundation
 

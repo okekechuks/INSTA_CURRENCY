@@ -14,10 +14,27 @@ export interface ExchangeRateProvider {
   getRate(from: CurrencyCode, to: CurrencyCode): Promise<ExchangeRate>;
 }
 
+export interface CachedExchangeRate extends ExchangeRate {
+  cachedAt: number;
+}
+
+export interface ExchangeRateCache {
+  get(from: CurrencyCode, to: CurrencyCode): Promise<CachedExchangeRate | null>;
+  set(rate: ExchangeRate): Promise<CachedExchangeRate>;
+}
+
 export interface ExchangeRateService {
   convert(price: DetectedPrice, targetCurrency: CurrencyCode): Promise<ConvertedPrice>;
   getRate(from: CurrencyCode, to: CurrencyCode): Promise<ExchangeRate>;
 }
+
+interface ExchangeRateServiceOptions {
+  cache?: ExchangeRateCache;
+  cacheTtlMs?: number;
+  now?: () => number;
+}
+
+export const RATE_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 export function createFrankfurterProvider(fetcher: typeof fetch = fetch): ExchangeRateProvider {
   return {
@@ -65,8 +82,11 @@ export function createFrankfurterProvider(fetcher: typeof fetch = fetch): Exchan
 
 export function createExchangeRateService(
   provider: ExchangeRateProvider = createFrankfurterProvider(),
+  options: ExchangeRateServiceOptions = {},
 ): ExchangeRateService {
   const pendingRates = new Map<string, Promise<ExchangeRate>>();
+  const cacheTtlMs = options.cacheTtlMs ?? RATE_CACHE_TTL_MS;
+  const now = options.now ?? Date.now;
 
   return {
     async convert(price, targetCurrency): Promise<ConvertedPrice> {
@@ -80,14 +100,47 @@ export function createExchangeRateService(
       return { convertedAmount, original: price, rate, targetCurrency };
     },
 
-    getRate(from, to): Promise<ExchangeRate> {
+    async getRate(from, to): Promise<ExchangeRate> {
+      if (from === to) {
+        return { from, rate: 1, to, updatedAt: now() };
+      }
+
       const pair = `${from}:${to}`;
+      const cachedRate = await options.cache?.get(from, to);
+
+      if (cachedRate && isFresh(cachedRate, cacheTtlMs, now())) {
+        return toExchangeRate(cachedRate);
+      }
+
       const pending = pendingRates.get(pair);
       if (pending) return pending;
 
-      const request = provider.getRate(from, to).finally(() => pendingRates.delete(pair));
+      const request = provider.getRate(from, to)
+        .then(async (rate) => {
+          await options.cache?.set(rate);
+          return rate;
+        })
+        .catch((error) => {
+          if (cachedRate) return toExchangeRate(cachedRate);
+
+          throw error;
+        })
+        .finally(() => pendingRates.delete(pair));
       pendingRates.set(pair, request);
       return request;
     },
+  };
+}
+
+function isFresh(rate: CachedExchangeRate, cacheTtlMs: number, now: number): boolean {
+  return now - rate.cachedAt <= cacheTtlMs;
+}
+
+function toExchangeRate(rate: CachedExchangeRate): ExchangeRate {
+  return {
+    from: rate.from,
+    rate: rate.rate,
+    to: rate.to,
+    updatedAt: rate.updatedAt,
   };
 }

@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createExchangeRateService, createFrankfurterProvider } from "./exchangeRate";
+import {
+  createExchangeRateService,
+  createFrankfurterProvider,
+  RATE_CACHE_TTL_MS,
+  type ExchangeRateCache,
+} from "./exchangeRate";
 
 describe("createFrankfurterProvider", () => {
   it("normalizes a provider response into an exchange rate", async () => {
@@ -55,5 +60,62 @@ describe("createExchangeRateService", () => {
     expect(getRate).toHaveBeenCalledTimes(1);
     expect(first.convertedAmount).toBe(15000);
     expect(second.convertedAmount).toBe(30000);
+  });
+
+  it("uses a fresh cached rate without calling the provider", async () => {
+    const getRate = vi.fn();
+    const cachedAt = 1_000;
+    const cache: ExchangeRateCache = {
+      get: vi.fn(async () => ({
+        cachedAt,
+        from: "USD" as const,
+        rate: 1500,
+        to: "NGN" as const,
+        updatedAt: 500,
+      })),
+      set: vi.fn(),
+    };
+    const service = createExchangeRateService({ getRate }, {
+      cache,
+      now: () => cachedAt + RATE_CACHE_TTL_MS - 1,
+    });
+
+    await expect(service.getRate("USD", "NGN")).resolves.toEqual({
+      from: "USD",
+      rate: 1500,
+      to: "NGN",
+      updatedAt: 500,
+    });
+    expect(getRate).not.toHaveBeenCalled();
+    expect(cache.set).not.toHaveBeenCalled();
+  });
+
+  it("falls back to a stale cached rate when refresh fails", async () => {
+    const getRate = vi.fn(async () => {
+      throw new Error("Provider unavailable");
+    });
+    const cache: ExchangeRateCache = {
+      get: vi.fn(async () => ({
+        cachedAt: 1_000,
+        from: "USD" as const,
+        rate: 1400,
+        to: "NGN" as const,
+        updatedAt: 500,
+      })),
+      set: vi.fn(),
+    };
+    const service = createExchangeRateService({ getRate }, {
+      cache,
+      now: () => 1_000 + RATE_CACHE_TTL_MS + 1,
+    });
+
+    await expect(service.getRate("USD", "NGN")).resolves.toEqual({
+      from: "USD",
+      rate: 1400,
+      to: "NGN",
+      updatedAt: 500,
+    });
+    expect(getRate).toHaveBeenCalledTimes(1);
+    expect(cache.set).not.toHaveBeenCalled();
   });
 });

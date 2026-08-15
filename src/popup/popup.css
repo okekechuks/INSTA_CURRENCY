@@ -83,3 +83,11 @@ select {
   font-size: 11px;
   text-align: right;
 }
+
+.rate-status {
+  min-height: 16px;
+  margin: 4px 0 0;
+  color: #435064;
+  font-size: 11px;
+  text-align: right;
+}

@@ -1,3 +1,4 @@
+import { createBackgroundRateProvider } from "../services/backgroundRateProvider";
 import { createExchangeRateService } from "../services/exchangeRate";
 import type { ConvertedPrice, CurrencyCode, DetectedPrice } from "../types/currency";
 import {
@@ -25,7 +26,7 @@ interface PricesConvertedEventDetail {
 }
 
 let scanner = createPriceScanner();
-const exchangeRates = createExchangeRateService();
+const exchangeRates = createExchangeRateService(createBackgroundRateProvider());
 let preferences: UserPreferences;
 let dynamicContentObserver: DynamicContentObserver | undefined;
 
