@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="344" height="405" viewBox="0 0 344 405" role="img" aria-labelledby="title desc">
+  <title id="title">Instant Currency popup preview</title>
+  <desc id="desc">A preview of the Instant Currency browser settings popup with target currency, conversion toggles, per-site control, and rate status.</desc>
+  <rect width="344" height="405" fill="#f7f8fa"/>
+  <text x="22" y="27" fill="#0f766e" font-family="Consolas, monospace" font-size="10" font-weight="700">BROWSER SETTINGS</text>
+  <text x="22" y="57" fill="#172033" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700">Instant Currency</text>
+  <text x="22" y="94" fill="#172033" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="650">Convert to</text>
+  <rect x="22" y="105" width="300" height="38" rx="5" fill="#ffffff" stroke="#b9c2ce"/>
+  <text x="38" y="129" fill="#172033" font-family="Segoe UI, Arial, sans-serif" font-size="13">Nigerian Naira (NGN)</text>
+  <path d="M310 120l5 5 5-5" fill="none" stroke="#172033" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="22" y1="161" x2="322" y2="161" stroke="#d8dee7"/>
+  <text x="22" y="190" fill="#172033" font-family="Segoe UI, Arial, sans-serif" font-size="13">Automatic conversion</text>
+  <rect x="306" y="177" width="16" height="16" rx="2" fill="#0f766e"/>
+  <path d="M310 185l3 3 6-7" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="22" y1="209" x2="322" y2="209" stroke="#d8dee7"/>
+  <text x="22" y="238" fill="#172033" font-family="Segoe UI, Arial, sans-serif" font-size="13">Show original price</text>
+  <rect x="306" y="225" width="16" height="16" rx="2" fill="#0f766e"/>
+  <path d="M310 233l3 3 6-7" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="22" y1="257" x2="322" y2="257" stroke="#d8dee7"/>
+  <text x="22" y="277" fill="#172033" font-family="Segoe UI, Arial, sans-serif" font-size="13">This site</text>
+  <text x="22" y="296" fill="#607086" font-family="Segoe UI, Arial, sans-serif" font-size="11">github.com</text>
+  <rect x="306" y="273" width="16" height="16" rx="2" fill="#0f766e"/>
+  <path d="M310 281l3 3 6-7" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="22" y1="305" x2="322" y2="305" stroke="#d8dee7"/>
+  <text x="155" y="350" fill="#435064" font-family="Segoe UI, Arial, sans-serif" font-size="11">Rates update after first conversion</text>
+</svg>
