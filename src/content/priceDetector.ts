@@ -17,6 +17,14 @@ const SYMBOL_CURRENCIES: Record<string, CurrencyCode> = {
 };
 
 const IGNORED_TAGS = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA", "INPUT"]);
+const PRICE_ELEMENT_SELECTOR = [
+  "[aria-label*='price' i]",
+  "[class*='amount' i]",
+  "[class*='currency' i]",
+  "[class*='price' i]",
+  "[data-price]",
+  "[itemprop='price']",
+].join(",");
 
 export function findPrices(text: string): DetectedPrice[] {
   const prices: DetectedPrice[] = [];
@@ -58,6 +66,28 @@ export function findUnprocessedPriceNodes(root: ParentNode, processedNodes: Weak
   return nodes;
 }
 
+export function findUnprocessedPriceElements(
+  root: ParentNode,
+  processedElements: WeakSet<Element>,
+  skippedTextNodes: Set<Text> = new Set(),
+): Element[] {
+  const elements = getPriceElementCandidates(root);
+  const matches: Element[] = [];
+
+  for (const element of elements) {
+    if (processedElements.has(element) || hasIgnoredElement(element)) continue;
+    if (containsSkippedTextNode(element, skippedTextNodes)) continue;
+    if (hasPriceElementDescendant(element)) continue;
+
+    const text = element.textContent?.trim() ?? "";
+    if (text.length > 80 || findPrices(text).length === 0) continue;
+
+    matches.push(element);
+  }
+
+  return matches;
+}
+
 function getCurrency(groups: Record<string, string | undefined>): CurrencyCode | null {
   if (groups.symbol) return SYMBOL_CURRENCIES[groups.symbol] ?? null;
 
@@ -80,6 +110,51 @@ function hasIgnoredParent(node: Text): boolean {
   }
 
   return false;
+}
+
+function getPriceElementCandidates(root: ParentNode): Element[] {
+  const candidates: Element[] = [];
+
+  if (root instanceof Element && root.matches(PRICE_ELEMENT_SELECTOR)) {
+    candidates.push(root);
+  }
+
+  candidates.push(...Array.from(root.querySelectorAll(PRICE_ELEMENT_SELECTOR)));
+  return candidates;
+}
+
+function hasIgnoredElement(element: Element): boolean {
+  let current: Element | null = element;
+
+  while (current) {
+    if (
+      IGNORED_TAGS.has(current.tagName)
+      || current instanceof HTMLElement && (
+        current.dataset.instantCurrencyConverted === "true"
+        || current.dataset.instantCurrencyOriginal === "true"
+      )
+    ) {
+      return true;
+    }
+    current = current.parentElement;
+  }
+
+  return false;
+}
+
+function containsSkippedTextNode(element: Element, skippedTextNodes: Set<Text>): boolean {
+  for (const textNode of skippedTextNodes) {
+    if (textNode.parentElement && element.contains(textNode.parentElement)) return true;
+  }
+
+  return false;
+}
+
+function hasPriceElementDescendant(element: Element): boolean {
+  return Array.from(element.querySelectorAll(PRICE_ELEMENT_SELECTOR)).some((child) => {
+    const text = child.textContent?.trim() ?? "";
+    return text.length <= 80 && findPrices(text).length > 0;
+  });
 }
 
 export function parseAmount(value: string): number | null {

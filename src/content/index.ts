@@ -10,8 +10,14 @@ import {
 } from "../utils/storage";
 
 import { observeDynamicContent, type DynamicContentObserver } from "./dynamicContent";
-import { clearRenderedPriceEstimates, renderConvertedPrices } from "./priceRenderer";
+import { appendConvertedPriceEstimate, clearRenderedPriceEstimates, renderConvertedPrices } from "./priceRenderer";
 import { createPriceScanner, type PriceScanMatch } from "./priceScanner";
+
+declare global {
+  interface Window {
+    __instantCurrencyInitialized?: boolean;
+  }
+}
 
 interface PriceDetectedEventDetail {
   hostname: string;
@@ -43,9 +49,9 @@ function scanPage(root?: ParentNode): void {
 
   const detail: PriceDetectedEventDetail = {
     hostname: window.location.hostname,
-    matches: matches.map(({ node, prices }) => ({
-      prices,
-      text: node.nodeValue ?? "",
+    matches: matches.map((match) => ({
+      prices: match.prices,
+      text: getMatchText(match),
     })),
   };
 
@@ -54,16 +60,24 @@ function scanPage(root?: ParentNode): void {
   void convertPrices(matches, preferences, settingsRevision);
 }
 
+function getMatchText(match: PriceScanMatch): string {
+  if (match.kind === "text") {
+    return match.node.nodeValue ?? "";
+  }
+
+  return match.element.textContent ?? "";
+}
+
 async function convertPrices(
   matches: PriceScanMatch[],
   activePreferences: UserPreferences,
   activeRevision: number,
 ): Promise<void> {
   const convertedMatches = await Promise.all(
-    matches.map(async ({ node, prices }) => ({
-      node,
+    matches.map(async (match) => ({
+      match,
       prices: await Promise.all(
-        prices.map(async (price) => {
+        match.prices.map(async (price) => {
           try {
             return await exchangeRates.convert(price, activePreferences.targetCurrency);
           } catch {
@@ -73,8 +87,8 @@ async function convertPrices(
       ),
     })),
   );
-  const successfulMatches = convertedMatches.map(({ node, prices }) => ({
-    node,
+  const successfulMatches = convertedMatches.map(({ match, prices }) => ({
+    match,
     prices: prices.filter((price): price is ConvertedPrice => price !== null),
   })).filter(({ prices }) => prices.length > 0);
   const successfulPrices = successfulMatches.flatMap(({ prices }) => prices);
@@ -89,7 +103,7 @@ async function convertPrices(
   }
 
   const renderedCount = successfulMatches.reduce(
-    (count, match) => count + renderConvertedPrices(match.node, match.prices, activePreferences.showOriginalPrice),
+    (count, { match, prices }) => count + renderConvertedMatch(match, prices, activePreferences.showOriginalPrice),
     0,
   );
 
@@ -101,6 +115,18 @@ async function convertPrices(
 
   window.dispatchEvent(new CustomEvent<PricesConvertedEventDetail>("instant-currency:prices-converted", { detail }));
   console.info(`Instant Currency rendered ${renderedCount} converted price estimate(s) in ${activePreferences.targetCurrency}.`);
+}
+
+function renderConvertedMatch(
+  match: PriceScanMatch,
+  prices: ConvertedPrice[],
+  showOriginalPrice: boolean,
+): number {
+  if (match.kind === "text") {
+    return renderConvertedPrices(match.node, prices, showOriginalPrice);
+  }
+
+  return appendConvertedPriceEstimate(match.element, prices);
 }
 
 async function initialize(): Promise<void> {
@@ -136,4 +162,7 @@ async function refreshForSettings(): Promise<void> {
   scanPage();
 }
 
-void initialize();
+if (!window.__instantCurrencyInitialized) {
+  window.__instantCurrencyInitialized = true;
+  void initialize();
+}

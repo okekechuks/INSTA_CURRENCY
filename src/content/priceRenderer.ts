@@ -69,6 +69,28 @@ export function renderConvertedPrices(
   return estimateCount;
 }
 
+export function appendConvertedPriceEstimate(
+  element: Element,
+  prices: ConvertedPrice[],
+): number {
+  if (prices.length === 0 || element.querySelector("[data-instant-currency-converted='true']")) return 0;
+
+  const document = element.ownerDocument;
+  const marker = document.createElement("span");
+  const estimateText = prices
+    .map((price) => formatCurrency(price.convertedAmount, price.targetCurrency))
+    .join(", ");
+
+  marker.className = "instant-currency-estimate";
+  marker.dataset.instantCurrencyConverted = "true";
+  marker.textContent = ` (approx. ${estimateText})`;
+  marker.setAttribute("aria-label", marker.textContent.trim());
+
+  ensureRendererStyles(document);
+  element.append(marker);
+  return prices.length;
+}
+
 export function clearRenderedPriceEstimates(root: ParentNode = document): void {
   root.querySelectorAll("[data-instant-currency-converted='true']").forEach((marker) => marker.remove());
   root.querySelectorAll("[data-instant-currency-original='true']").forEach((source) => {

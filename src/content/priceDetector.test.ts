@@ -20,6 +20,12 @@ describe("findPrices", () => {
     ]);
   });
 
+  it("detects symbol prices separated by markup-like whitespace", () => {
+    expect(findPrices("\u00A3\n 12.81").map(({ amount, currency }) => ({ amount, currency }))).toEqual([
+      { amount: 12.81, currency: "GBP" },
+    ]);
+  });
+
   it("detects the phase 2 target formats from the project brief", () => {
     expect(
       findPrices("$1,299.99 US$1,299.99 USD 1,299.99 1,299.99 USD").map(({ amount, currency, raw }) => ({

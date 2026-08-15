@@ -20,6 +20,7 @@ const saveStatus = getElement<HTMLParagraphElement>("save-status");
 const rateStatus = getElement<HTMLParagraphElement>("rate-status");
 
 let activeHostname: string | null = null;
+let activeTabId: number | null = null;
 
 for (const currency of SUPPORTED_CURRENCIES) {
   const option = document.createElement("option");
@@ -53,8 +54,11 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 
 async function initializePopup(): Promise<void> {
   await loadPreferences();
-  activeHostname = await getActiveHostname();
+  const activeTab = await getActiveTabInfo();
+  activeHostname = activeTab.hostname;
+  activeTabId = activeTab.tabId;
   renderActiveSite();
+  await injectContentScript();
   await loadCurrentSiteControl();
   await loadRateStatus();
 }
@@ -130,16 +134,35 @@ function formatTimestamp(timestamp: number): string {
   }).format(new Date(timestamp));
 }
 
-async function getActiveHostname(): Promise<string | null> {
+async function getActiveTabInfo(): Promise<{ hostname: string | null; tabId: number | null }> {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  const activeTabUrl = tabs[0]?.url;
-  if (!activeTabUrl) return null;
+  const activeTab = tabs[0];
+  const activeTabUrl = activeTab?.url;
+  if (!activeTabUrl) return { hostname: null, tabId: null };
 
   try {
     const url = new URL(activeTabUrl);
-    return url.protocol === "http:" || url.protocol === "https:" ? url.hostname : null;
+    const isSupportedPage = url.protocol === "http:" || url.protocol === "https:";
+
+    return {
+      hostname: isSupportedPage ? url.hostname : null,
+      tabId: isSupportedPage && typeof activeTab.id === "number" ? activeTab.id : null,
+    };
   } catch {
-    return null;
+    return { hostname: null, tabId: null };
+  }
+}
+
+async function injectContentScript(): Promise<void> {
+  if (activeTabId === null) return;
+
+  try {
+    await chrome.scripting.executeScript({
+      files: ["content.js"],
+      target: { tabId: activeTabId },
+    });
+  } catch {
+    // The manifest content script still handles normal page loads.
   }
 }
 
