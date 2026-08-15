@@ -3,10 +3,13 @@ import { formatCurrency } from "../utils/currency";
 
 export interface PriceRenderPart {
   text: string;
-  type: "estimate" | "original";
+  type: "estimate" | "original" | "source";
 }
 
-export function buildRenderedPriceParts(text: string, prices: ConvertedPrice[]): PriceRenderPart[] {
+export function buildRenderedPriceParts(
+  text: string,
+  prices: ConvertedPrice[],
+): PriceRenderPart[] {
   const parts: PriceRenderPart[] = [];
   let cursor = 0;
 
@@ -14,7 +17,8 @@ export function buildRenderedPriceParts(text: string, prices: ConvertedPrice[]):
     const { end, raw, start } = price.original;
     if (start < cursor || end > text.length || text.slice(start, end) !== raw) continue;
 
-    addOriginalPart(parts, text.slice(cursor, end));
+    addOriginalPart(parts, text.slice(cursor, start));
+    parts.push({ text: raw, type: "source" });
     parts.push({ text: ` (approx. ${formatCurrency(price.convertedAmount, price.targetCurrency)})`, type: "estimate" });
     cursor = end;
   }
@@ -23,7 +27,11 @@ export function buildRenderedPriceParts(text: string, prices: ConvertedPrice[]):
   return parts;
 }
 
-export function renderConvertedPrices(node: Text, prices: ConvertedPrice[]): number {
+export function renderConvertedPrices(
+  node: Text,
+  prices: ConvertedPrice[],
+  showOriginalPrice = true,
+): number {
   if (!node.parentNode || prices.length === 0) return 0;
 
   const parts = buildRenderedPriceParts(node.nodeValue ?? "", prices);
@@ -39,6 +47,15 @@ export function renderConvertedPrices(node: Text, prices: ConvertedPrice[]): num
       continue;
     }
 
+    if (part.type === "source") {
+      const source = document.createElement("span");
+      source.dataset.instantCurrencyOriginal = "true";
+      source.hidden = !showOriginalPrice;
+      source.textContent = part.text;
+      fragment.append(source);
+      continue;
+    }
+
     const marker = document.createElement("span");
     marker.className = "instant-currency-estimate";
     marker.dataset.instantCurrencyConverted = "true";
@@ -50,6 +67,13 @@ export function renderConvertedPrices(node: Text, prices: ConvertedPrice[]): num
   ensureRendererStyles(document);
   node.replaceWith(fragment);
   return estimateCount;
+}
+
+export function clearRenderedPriceEstimates(root: ParentNode = document): void {
+  root.querySelectorAll("[data-instant-currency-converted='true']").forEach((marker) => marker.remove());
+  root.querySelectorAll("[data-instant-currency-original='true']").forEach((source) => {
+    source.replaceWith(source.ownerDocument.createTextNode(source.textContent ?? ""));
+  });
 }
 
 function addOriginalPart(parts: PriceRenderPart[], text: string): void {

@@ -15,6 +15,7 @@ detection slice:
   duplicate text-node avoidance, and content-script page scanning.
 - Vitest coverage for detector parsing and conversion behavior.
 - Rendered estimates that preserve the merchant's original price text.
+- Stored user preferences and a working popup control surface.
 
 ## Phase 1: Extension Foundation
 
@@ -106,6 +107,7 @@ Deliverables:
 - Original-price/display preference controls.
 - `chrome.storage` wrapper for preferences.
 - Settings change handling from popup to content scripts.
+- Existing estimates are cleared and reapplied when preferences change.
 
 Repo areas:
 

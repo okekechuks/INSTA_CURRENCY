@@ -8,22 +8,28 @@
   <body>
     <main class="popup-shell">
       <header>
-        <p class="eyebrow">INSTANT CURRENCY</p>
-        <h1>Convert as you browse.</h1>
-        <p class="intro">Price conversion will appear beside supported prices on web pages.</p>
+        <p class="eyebrow">BROWSER SETTINGS</p>
+        <h1>Instant Currency</h1>
       </header>
 
-      <section class="status-card" aria-label="Extension status">
-        <span class="status-dot" aria-hidden="true"></span>
-        <div>
-          <strong>Extension active</strong>
-          <p>Price detection arrives in Phase 2.</p>
-        </div>
-      </section>
+      <form id="preferences-form">
+        <label class="field-label" for="target-currency">Convert to</label>
+        <select id="target-currency" name="targetCurrency"></select>
 
-      <footer>Phase 1: extension foundation</footer>
+        <div class="setting-list">
+          <label class="setting-row" for="automatic-conversion">
+            <span>Automatic conversion</span>
+            <input id="automatic-conversion" name="automaticConversion" type="checkbox" />
+          </label>
+          <label class="setting-row" for="show-original-price">
+            <span>Show original price</span>
+            <input id="show-original-price" name="showOriginalPrice" type="checkbox" />
+          </label>
+        </div>
+      </form>
+
+      <p id="save-status" class="save-status" role="status" aria-live="polite"></p>
     </main>
     <script type="module" src="./popup.ts"></script>
   </body>
 </html>
-

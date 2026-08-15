@@ -69,7 +69,11 @@ function hasIgnoredParent(node: Text): boolean {
   let parent = node.parentElement;
 
   while (parent) {
-    if (IGNORED_TAGS.has(parent.tagName) || parent.dataset.instantCurrencyConverted === "true") {
+    if (
+      IGNORED_TAGS.has(parent.tagName)
+      || parent.dataset.instantCurrencyConverted === "true"
+      || parent.dataset.instantCurrencyOriginal === "true"
+    ) {
       return true;
     }
     parent = parent.parentElement;

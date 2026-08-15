@@ -13,6 +13,19 @@ export const SUPPORTED_CURRENCIES = [
 
 export type CurrencyCode = (typeof SUPPORTED_CURRENCIES)[number];
 
+export const CURRENCY_LABELS: Record<CurrencyCode, string> = {
+  AUD: "Australian Dollar",
+  CAD: "Canadian Dollar",
+  EUR: "Euro",
+  GBP: "British Pound",
+  GHS: "Ghanaian Cedi",
+  JPY: "Japanese Yen",
+  KES: "Kenyan Shilling",
+  NGN: "Nigerian Naira",
+  USD: "US Dollar",
+  ZAR: "South African Rand",
+};
+
 export interface DetectedPrice {
   amount: number;
   currency: CurrencyCode;

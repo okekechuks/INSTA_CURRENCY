@@ -22,7 +22,7 @@ describe("buildRenderedPriceParts", () => {
 
     const parts = buildRenderedPriceParts(text, prices);
 
-    expect(parts.filter((part) => part.type === "original").map((part) => part.text).join("")).toBe(text);
+    expect(parts.filter((part) => part.type !== "estimate").map((part) => part.text).join("")).toBe(text);
     expect(parts.filter((part) => part.type === "estimate")).toHaveLength(2);
     expect(parts.every((part) => part.type !== "estimate" || part.text.startsWith(" (approx. "))).toBe(true);
   });
