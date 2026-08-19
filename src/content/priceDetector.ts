@@ -28,12 +28,8 @@ const PRICE_ELEMENT_SELECTOR = [
   "[data-test*='price' i]",
 ].join(",");
 
-// Keep this deliberately broad. Commerce sites often split a price across
-// several spans, e.g. <span>$</span><span>49</span><span>.99</span>.
-// The fallback lets the detector inspect small, price-like DOM elements even
-// when the site does not expose a useful price class/attribute.
 const FALLBACK_MAX_TEXT_LENGTH = 80;
-const FALLBACK_PRICE_HINT = /(?:US\\$|[$\\u00A3\\u20AC\\u00A5\\u20A6]|\\b(?:USD|GBP|EUR|JPY|NGN|CAD|AUD|GHS|KES|ZAR)\\b)/i;
+const FALLBACK_PRICE_HINT = /(?:US\$|[$\u00A3\u20AC\u00A5\u20A6]|\b(?:USD|GBP|EUR|JPY|NGN|CAD|AUD|GHS|KES|ZAR)\b)/i;
 
 export function findPrices(text: string): DetectedPrice[] {
   const prices: DetectedPrice[] = [];
@@ -93,9 +89,6 @@ export function findUnprocessedPriceElements(
     const prices = findPrices(text);
     if (prices.length === 0) continue;
 
-    // Prefer the smallest candidate that contains a complete price. If a
-    // parent and child both match, only the child is rendered so we don't
-    // duplicate the estimate.
     if (hasMatchingPriceDescendant(element)) continue;
 
     matches.push(element);
@@ -145,11 +138,10 @@ function getPriceElementCandidates(root: ParentNode): Element[] {
 
   root.querySelectorAll(PRICE_ELEMENT_SELECTOR).forEach(add);
 
-  // Fallback for ecommerce DOMs that have no semantic price class. Only
-  // inspect relatively small elements containing a currency hint. This is
-  // intentionally more permissive than the text-node scanner because a
-  // complete price may be distributed across sibling text nodes.
-  root.querySelectorAll("body *:not(script):not(style):not(noscript):not(input):not(textarea)").forEach((element) => {
+  // Commerce sites frequently split a price across sibling elements, such as
+  // <span>$</span><span>49</span><span>.99</span>. Inspect small elements as
+  // a fallback when there is no useful price class or data attribute.
+  root.querySelectorAll("*:not(script):not(style):not(noscript):not(input):not(textarea)").forEach((element) => {
     if (element.textContent && element.textContent.length <= FALLBACK_MAX_TEXT_LENGTH) {
       const text = normalizePriceText(element.textContent);
       if (FALLBACK_PRICE_HINT.test(text)) add(element);
@@ -195,7 +187,7 @@ function hasMatchingPriceDescendant(element: Element): boolean {
 }
 
 function normalizePriceText(text: string): string {
-  return text.replace(/[\\u00A0\\u2007\\u202F]/g, " ").replace(/\\s+/g, " ").trim();
+  return text.replace(/[\u00A0\u2007\u202F]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 export function parseAmount(value: string): number | null {
