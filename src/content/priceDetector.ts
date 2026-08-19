@@ -24,7 +24,12 @@ const PRICE_ELEMENT_SELECTOR = [
   "[class*='price' i]",
   "[data-price]",
   "[itemprop='price']",
+  "[data-testid*='price' i]",
+  "[data-test*='price' i]",
 ].join(",");
+
+const FALLBACK_MAX_TEXT_LENGTH = 80;
+const FALLBACK_PRICE_HINT = /(?:US\$|[$\u00A3\u20AC\u00A5\u20A6]|\b(?:USD|GBP|EUR|JPY|NGN|CAD|AUD|GHS|KES|ZAR)\b)/i;
 
 export function findPrices(text: string): DetectedPrice[] {
   const prices: DetectedPrice[] = [];
@@ -71,16 +76,20 @@ export function findUnprocessedPriceElements(
   processedElements: WeakSet<Element>,
   skippedTextNodes: Set<Text> = new Set(),
 ): Element[] {
-  const elements = getPriceElementCandidates(root);
+  const candidates = getPriceElementCandidates(root);
   const matches: Element[] = [];
 
-  for (const element of elements) {
+  for (const element of candidates) {
     if (processedElements.has(element) || hasIgnoredElement(element)) continue;
     if (containsSkippedTextNode(element, skippedTextNodes)) continue;
-    if (hasPriceElementDescendant(element)) continue;
 
-    const text = element.textContent?.trim() ?? "";
-    if (text.length > 80 || findPrices(text).length === 0) continue;
+    const text = normalizePriceText(element.textContent ?? "");
+    if (text.length === 0 || text.length > FALLBACK_MAX_TEXT_LENGTH) continue;
+
+    const prices = findPrices(text);
+    if (prices.length === 0) continue;
+
+    if (hasMatchingPriceDescendant(element)) continue;
 
     matches.push(element);
   }
@@ -114,12 +123,31 @@ function hasIgnoredParent(node: Text): boolean {
 
 function getPriceElementCandidates(root: ParentNode): Element[] {
   const candidates: Element[] = [];
+  const seen = new Set<Element>();
+
+  const add = (element: Element): void => {
+    if (!seen.has(element)) {
+      seen.add(element);
+      candidates.push(element);
+    }
+  };
 
   if (root instanceof Element && root.matches(PRICE_ELEMENT_SELECTOR)) {
-    candidates.push(root);
+    add(root);
   }
 
-  candidates.push(...Array.from(root.querySelectorAll(PRICE_ELEMENT_SELECTOR)));
+  root.querySelectorAll(PRICE_ELEMENT_SELECTOR).forEach(add);
+
+  // Commerce sites frequently split a price across sibling elements, such as
+  // <span>$</span><span>49</span><span>.99</span>. Inspect small elements as
+  // a fallback when there is no useful price class or data attribute.
+  root.querySelectorAll("*:not(script):not(style):not(noscript):not(input):not(textarea)").forEach((element) => {
+    if (element.textContent && element.textContent.length <= FALLBACK_MAX_TEXT_LENGTH) {
+      const text = normalizePriceText(element.textContent);
+      if (FALLBACK_PRICE_HINT.test(text)) add(element);
+    }
+  });
+
   return candidates;
 }
 
@@ -150,11 +178,16 @@ function containsSkippedTextNode(element: Element, skippedTextNodes: Set<Text>):
   return false;
 }
 
-function hasPriceElementDescendant(element: Element): boolean {
-  return Array.from(element.querySelectorAll(PRICE_ELEMENT_SELECTOR)).some((child) => {
-    const text = child.textContent?.trim() ?? "";
-    return text.length <= 80 && findPrices(text).length > 0;
+function hasMatchingPriceDescendant(element: Element): boolean {
+  return Array.from(element.children).some((child) => {
+    if (hasIgnoredElement(child)) return false;
+    const text = normalizePriceText(child.textContent ?? "");
+    return text.length <= FALLBACK_MAX_TEXT_LENGTH && findPrices(text).length > 0;
   });
+}
+
+function normalizePriceText(text: string): string {
+  return text.replace(/[\u00A0\u2007\u202F]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 export function parseAmount(value: string): number | null {

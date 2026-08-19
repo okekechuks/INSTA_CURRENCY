@@ -41,8 +41,16 @@ describe("findPrices", () => {
     ]);
   });
 
-  it("normalizes lower-case currency codes", () => {
+  it("detects lower-case currency codes", () => {
     expect(findPrices("cad 14.50 and 19.99 aud").map(({ currency }) => currency)).toEqual(["CAD", "AUD"]);
+  });
+
+  it("parses textContent reconstructed from split commerce markup", () => {
+    // For <span>$</span><span>49</span><span>.99</span>, the container's
+    // textContent is "$49.99". The DOM detector uses that combined text.
+    expect(findPrices("$49.99")).toEqual([
+      expect.objectContaining({ amount: 49.99, currency: "USD", raw: "$49.99" }),
+    ]);
   });
 });
 
