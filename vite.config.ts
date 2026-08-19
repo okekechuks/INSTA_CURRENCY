@@ -1,24 +1,30 @@
-import { copyFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vite";
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
 
-function copyManifest(): Plugin {
+function copyExtensionFiles(): Plugin {
   return {
-    name: "copy-extension-manifest",
+    name: "copy-extension-files",
     closeBundle() {
-      copyFileSync(
-        resolve(projectRoot, "manifest.json"),
-        resolve(projectRoot, "dist/manifest.json"),
-      );
+      const distRoot = resolve(projectRoot, "dist");
+      const assetSource = resolve(projectRoot, "src/popup/assets");
+      const assetTarget = resolve(distRoot, "assets");
+      mkdirSync(assetTarget, { recursive: true });
+
+      for (const file of readdirSync(assetSource)) {
+        copyFileSync(resolve(assetSource, file), resolve(assetTarget, file));
+      }
+
+      copyFileSync(resolve(projectRoot, "manifest.json"), resolve(distRoot, "manifest.json"));
     },
   };
 }
 
 export default defineConfig({
-  plugins: [copyManifest()],
+  plugins: [copyExtensionFiles()],
   build: {
     emptyOutDir: true,
     outDir: "dist",

@@ -3,40 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>Instant Currency</title>
   </head>
   <body>
     <main class="popup-shell">
-      <header>
-        <p class="eyebrow">BROWSER SETTINGS</p>
-        <h1>Instant Currency</h1>
+      <header class="app-header">
+        <div class="brand-wrap">
+          <img class="brand-logo" src="assets/logo.svg" alt="Instant Currency" />
+          <div><h1>Instant Currency</h1><p class="subtitle">Smart currency converter</p></div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-button" id="settings-btn" type="button" title="Settings" aria-label="Settings"><svg aria-hidden="true"><use href="assets/icons.svg#settings" /></svg></button>
+          <button class="icon-button" id="theme-toggle" type="button" title="Toggle theme" aria-label="Toggle theme"><svg class="theme-icon light" aria-hidden="true"><use href="assets/icons.svg#moon" /></svg><svg class="theme-icon dark" aria-hidden="true"><use href="assets/icons.svg#sun" /></svg></button>
+        </div>
       </header>
 
-      <form id="preferences-form">
-        <label class="field-label" for="target-currency">Convert to</label>
-        <select id="target-currency" name="targetCurrency"></select>
-
-        <div class="setting-list">
-          <label class="setting-row" for="automatic-conversion">
-            <span>Automatic conversion</span>
-            <input id="automatic-conversion" name="automaticConversion" type="checkbox" />
-          </label>
-          <label class="setting-row" for="show-original-price">
-            <span>Show original price</span>
-            <input id="show-original-price" name="showOriginalPrice" type="checkbox" />
-          </label>
-          <label class="setting-row" for="current-site-enabled">
-            <span>
-              This site
-              <small id="current-site-host">Detecting site</small>
-            </span>
-            <input id="current-site-enabled" name="currentSiteEnabled" type="checkbox" />
-          </label>
-        </div>
+      <form id="preferences-form" class="settings-form">
+        <section class="section-block">
+          <p class="section-label">Convert to</p>
+          <div class="currency-select-wrap">
+            <span class="currency-mark" aria-hidden="true">₦</span>
+            <select id="target-currency" name="targetCurrency" aria-label="Target currency"></select>
+            <span class="select-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </section>
+        <section class="setting-card">
+          <label class="setting-row" for="automatic-conversion"><span class="setting-icon"><svg aria-hidden="true"><use href="assets/icons.svg#bolt" /></svg></span><span class="setting-copy"><strong>Automatic conversion</strong><small>Detect and convert prices automatically</small></span><span class="switch"><input id="automatic-conversion" name="automaticConversion" type="checkbox" /><span class="slider"></span></span></label>
+          <label class="setting-row" for="show-original-price"><span class="setting-icon"><svg aria-hidden="true"><use href="assets/icons.svg#eye" /></svg></span><span class="setting-copy"><strong>Show original price</strong><small>Display the source amount beside the conversion</small></span><span class="switch"><input id="show-original-price" name="showOriginalPrice" type="checkbox" /><span class="slider"></span></span></label>
+          <label class="setting-row" for="current-site-enabled"><span class="setting-icon"><svg aria-hidden="true"><use href="assets/icons.svg#globe" /></svg></span><span class="setting-copy"><strong>This site</strong><small id="current-site-host">Detecting site</small></span><span class="switch"><input id="current-site-enabled" name="currentSiteEnabled" type="checkbox" /><span class="slider"></span></span></label>
+        </section>
       </form>
 
+      <section class="rate-card" aria-live="polite">
+        <div class="rate-icon"><svg aria-hidden="true"><use href="assets/icons.svg#chart" /></svg></div>
+        <div class="rate-copy"><div class="rate-heading"><span>Exchange rate</span><span class="live-pill">CACHED</span></div><p id="rate-value">Waiting for first conversion</p><p id="rate-status" class="rate-meta"></p></div>
+        <button id="refresh-rate" class="refresh-button" type="button" title="Refresh rate" aria-label="Refresh exchange rate"><svg aria-hidden="true"><use href="assets/icons.svg#refresh" /></svg></button>
+      </section>
+
+      <div class="quick-actions" aria-label="Quick actions">
+        <button type="button" class="quick-action" id="favorites-btn"><svg aria-hidden="true"><use href="assets/icons.svg#star" /></svg><span>Favorites</span></button>
+        <button type="button" class="quick-action" id="history-btn"><svg aria-hidden="true"><use href="assets/icons.svg#history" /></svg><span>History</span></button>
+        <button type="button" class="quick-action" id="rates-btn"><svg aria-hidden="true"><use href="assets/icons.svg#chart" /></svg><span>Rates</span></button>
+        <button type="button" class="quick-action" id="blocked-btn"><svg aria-hidden="true"><use href="assets/icons.svg#block" /></svg><span>Blocked sites</span></button>
+      </div>
+
+      <button id="premium-btn" class="premium-banner" type="button"><span class="premium-icon">♛</span><span><strong>Go Premium</strong><small>Unlock more currencies &amp; advanced options</small></span><span class="premium-arrow">›</span></button>
       <p id="save-status" class="save-status" role="status" aria-live="polite"></p>
-      <p id="rate-status" class="rate-status"></p>
     </main>
     <script type="module" src="./popup.ts"></script>
   </body>

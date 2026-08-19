@@ -18,6 +18,9 @@ const currentSiteEnabled = getElement<HTMLInputElement>("current-site-enabled");
 const currentSiteHost = getElement<HTMLElement>("current-site-host");
 const saveStatus = getElement<HTMLParagraphElement>("save-status");
 const rateStatus = getElement<HTMLParagraphElement>("rate-status");
+const rateValue = getElement<HTMLParagraphElement>("rate-value");
+const themeToggle = getElement<HTMLButtonElement>("theme-toggle");
+const refreshRate = getElement<HTMLButtonElement>("refresh-rate");
 
 let activeHostname: string | null = null;
 let activeTabId: number | null = null;
@@ -36,9 +39,34 @@ form.addEventListener("change", (event) => {
     void persistCurrentSiteControl();
     return;
   }
-
   void persistPreferences();
 });
+
+themeToggle.addEventListener("click", () => {
+  const nextTheme = document.documentElement.classList.contains("dark") ? "light" : "dark";
+  setTheme(nextTheme);
+  void chrome.storage.local.set({ instantCurrencyTheme: nextTheme });
+});
+
+refreshRate.addEventListener("click", () => {
+  refreshRate.disabled = true;
+  void loadRateStatus(true).finally(() => {
+    refreshRate.disabled = false;
+  });
+});
+
+for (const id of ["settings-btn", "favorites-btn", "history-btn", "rates-btn", "blocked-btn", "premium-btn"]) {
+  const button = document.getElementById(id);
+  button?.addEventListener("click", () => {
+    if (id === "settings-btn") {
+      saveStatus.textContent = "Settings are available through the controls below.";
+    } else if (id === "premium-btn") {
+      saveStatus.textContent = "Premium features are coming soon.";
+    } else {
+      saveStatus.textContent = `${button.textContent?.trim() ?? "Action"} is coming soon.`;
+    }
+  });
+}
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === "local" && changes[RATE_CACHE_STORAGE_KEY]) {
@@ -49,7 +77,6 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === "sync" && changes[SITE_CONTROLS_STORAGE_KEY]) {
     void loadCurrentSiteControl();
   }
-
 });
 
 async function initializePopup(): Promise<void> {
@@ -60,6 +87,7 @@ async function initializePopup(): Promise<void> {
   renderActiveSite();
   await injectContentScript();
   await loadCurrentSiteControl();
+  await loadTheme();
   await loadRateStatus();
 }
 
@@ -72,7 +100,6 @@ async function loadPreferences(): Promise<void> {
 
 async function persistPreferences(): Promise<void> {
   saveStatus.textContent = "Saving...";
-
   try {
     await savePreferences({
       automaticConversion: automaticConversion.checked,
@@ -91,15 +118,12 @@ async function loadCurrentSiteControl(): Promise<void> {
     currentSiteEnabled.checked = false;
     return;
   }
-
   currentSiteEnabled.checked = await isSiteEnabled(activeHostname);
 }
 
 async function persistCurrentSiteControl(): Promise<void> {
   if (!activeHostname) return;
-
   saveStatus.textContent = "Saving...";
-
   try {
     await setSiteEnabled(activeHostname, currentSiteEnabled.checked);
     saveStatus.textContent = currentSiteEnabled.checked ? "Enabled on this site" : "Disabled on this site";
@@ -109,7 +133,7 @@ async function persistCurrentSiteControl(): Promise<void> {
   }
 }
 
-async function loadRateStatus(): Promise<void> {
+async function loadRateStatus(forceRefresh = false): Promise<void> {
   try {
     const latestRate = await getLatestCachedExchangeRate(
       chrome.storage.local,
@@ -117,14 +141,31 @@ async function loadRateStatus(): Promise<void> {
     );
 
     if (!latestRate) {
-      rateStatus.textContent = "Rates update after first conversion";
+      rateValue.textContent = "Waiting for first conversion";
+      rateStatus.textContent = "Rates update after your first conversion";
       return;
     }
 
-    rateStatus.textContent = `Rates updated ${formatTimestamp(latestRate.cachedAt)}`;
+    if (forceRefresh) {
+      rateStatus.textContent = "Using the latest cached rate available to the extension";
+    } else {
+      rateStatus.textContent = `Updated ${formatTimestamp(latestRate.cachedAt)}`;
+    }
+
+    rateValue.textContent = `1 ${latestRate.from} ≈ ${latestRate.rate.toFixed(4)} ${latestRate.to}`;
   } catch {
+    rateValue.textContent = "Rate unavailable";
     rateStatus.textContent = "Rate status unavailable";
   }
+}
+
+async function loadTheme(): Promise<void> {
+  const stored = await chrome.storage.local.get("instantCurrencyTheme");
+  setTheme(stored.instantCurrencyTheme === "dark" ? "dark" : "light");
+}
+
+function setTheme(theme: "light" | "dark"): void {
+  document.documentElement.classList.toggle("dark", theme === "dark");
 }
 
 function formatTimestamp(timestamp: number): string {
@@ -143,7 +184,6 @@ async function getActiveTabInfo(): Promise<{ hostname: string | null; tabId: num
   try {
     const url = new URL(activeTabUrl);
     const isSupportedPage = url.protocol === "http:" || url.protocol === "https:";
-
     return {
       hostname: isSupportedPage ? url.hostname : null,
       tabId: isSupportedPage && typeof activeTab.id === "number" ? activeTab.id : null,
@@ -155,7 +195,6 @@ async function getActiveTabInfo(): Promise<{ hostname: string | null; tabId: num
 
 async function injectContentScript(): Promise<void> {
   if (activeTabId === null) return;
-
   try {
     await chrome.scripting.executeScript({
       files: ["content.js"],
@@ -174,6 +213,5 @@ function renderActiveSite(): void {
 function getElement<ElementType extends HTMLElement>(id: string): ElementType {
   const element = document.getElementById(id);
   if (!element) throw new Error(`Missing popup element: ${id}`);
-
   return element as ElementType;
 }
